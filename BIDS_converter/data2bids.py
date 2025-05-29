@@ -355,6 +355,7 @@ class Data2Bids:  # main conversion and file organization program
             else:
                 self._data_dir = data_dir
             self._dataset_name = op.basename(self._data_dir)
+            print(self._dataset_name) # added to test
         else:
             self._data_dir = None
 
@@ -476,7 +477,7 @@ class Data2Bids:  # main conversion and file organization program
             part_match_z = self.part_check(part_match)[1]
         if verbose is None:
             verbose = self._is_verbose
-        dst_file_path = op.join(self._bids_dir, "sub-" + part_match_z)
+        dst_file_path = op.join(self._bids_dir, "sub-" + part_match_z) # MAYBE CHANGE THIS
         new_name = "sub-" + part_match_z
         SeqType = None
         # Matching the session
@@ -876,6 +877,11 @@ class Data2Bids:  # main conversion and file organization program
                     physical_max=np.amax(array), physical_min=(np.amin(array)))
                 print("converting binary" + source + " to edf" +
                       op.splitext(source)[0] + ".edf")
+                # getting rid of sample_rate (ChatGPT)
+                for sh in signal_headers:
+                    if 'sample_rate' in sh:
+                        del sh['sample_rate']
+                #end
                 highlevel.write_edf(
                     op.splitext(source)[0] + ".edf", array,
                     signal_headers,
@@ -934,10 +940,15 @@ class Data2Bids:  # main conversion and file organization program
                 ]:
                     os.makedirs(op.join(file_path, "practice"),
                                 exist_ok=True)
+                    # getting rid of sample_rate (ChatGPT)
+                    for sh in signal_headers:
+                        if 'sample_rate' in sh:
+                            del sh['sample_rate']
+                    #end
                     highlevel.write_edf(practice, np.split(array, [
                         0, start_nums[0][0]], axis=1)[1], signal_headers,
-                                        header, digital=self._config["ieeg"]["headerData"][
-                            "digital"])
+                        header, digital=self._config["ieeg"]["headerData"][
+                        "digital"])
                     self.bidsignore("*practice*")
             else:
                 start = start_nums[i - 1][1]
@@ -953,6 +964,11 @@ class Data2Bids:  # main conversion and file organization program
             if self._is_verbose:
                 print(full_name + "(Samples[" + str(start) + ":" + str(
                     end) + "]) ---> " + edf_name)
+            # getting rid of sample_rate (ChatGPT)
+            for sh in signal_headers:
+                if 'sample_rate' in sh:
+                    del sh['sample_rate']
+            #end
             highlevel.write_edf(edf_name, new_array, signal_headers, header,
                                 digital=self._config["ieeg"]["headerData"]["digital"])
             # zero the timing so that each file starts at t=0
@@ -966,7 +982,7 @@ class Data2Bids:  # main conversion and file organization program
     def rewrite_tsv(self, tsv_name: PathLike, part_match: str):
         df = pd.read_csv(tsv_name, sep="\t", header=0)
         os.remove(tsv_name)
-        df.replace("[]", np.NaN, inplace=True)
+        df.replace("[]", np.nan, inplace=True) # changed from np.NaN
 
         # all other column manipulation and math in frame2bids
         df_new = org.frame2bids(df, self._config["eventFormat"],
@@ -1393,7 +1409,7 @@ class Data2Bids:  # main conversion and file organization program
             for jfile, contents in json_list.items():
                 print(part_match_z, task_label_match, jfile)
                 file_name = op.join(
-                    self._bids_dir, "sub-" + part_match_z, "ieeg",
+                    self._bids_dir, "sub-" + part_match_z, "ieeg", # MAYBE CHANGE THIS
                     "sub-{}_task-{}_{}".format(
                         part_match_z, task_label_match, jfile))
                 with open(file_name, "w") as fst:
